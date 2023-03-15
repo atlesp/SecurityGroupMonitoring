@@ -12,7 +12,6 @@
   Find if a security group is added to a interface
 
 # Scope not implemented 
-- Make sure the SG at least is attached to one instance
 - Public subnet / public IP check
 - Lacks proper testing to find possible edge cases / race conditions
 
@@ -52,3 +51,4 @@ I have not enabled AWS Config in my private playground AWS account and experienc
 - https://developer.hashicorp.com/terraform/tutorials/aws-get-started
 - https://aws.amazon.com/blogs/security/how-to-monitor-aws-account-configuration-changes-and-api-calls-to-amazon-ec2-security-groups/
 - https://aws.amazon.com/premiumsupport/knowledge-center/cloudtrail-event-history-changed/
+- https://aws.amazon.com/premiumsupport/knowledge-center/ec2-find-security-group-resources/

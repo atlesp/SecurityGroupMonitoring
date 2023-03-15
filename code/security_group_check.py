@@ -13,24 +13,34 @@ LOGGER = logging.getLogger()
 LOGGER.setLevel(logging.INFO)
 
 
+def get_field_from_event_or_detail(event, field):
+    return event.get(field, event.get("detail", {})[field])
+
+
 def lambda_handler(event, context):
     LOGGER.info(f"EVENT: {event}")
 
-    event_name = event["eventName"]
+    event_name = get_field_from_event_or_detail(event, "eventName")
     LOGGER.debug(f"EVENT NAME: {event_name}")
     if event_name == "AuthorizeSecurityGroupIngress":
         check_ingress_rule_changes(
-            event["requestParameters"]["groupId"],
-            event["responseElements"]["securityGroupRuleSet"]["items"],
+            get_field_from_event_or_detail(event, "requestParameters")["groupId"],
+            get_field_from_event_or_detail(event, "responseElements")[
+                "securityGroupRuleSet"
+            ]["items"],
         )
     elif event_name == "RunInstances":
         check_if_instance_has_illegal_security_group(
-            event["responseElements"]["instancesSet"]["items"],
+            get_field_from_event_or_detail(event, "responseElements")["instancesSet"][
+                "items"
+            ],
         )
 
     elif event_name == "ModifyNetworkInterfaceAttribute":
-        interface_id = event["requestParameters"].get("networkInterfaceId", None)
-        groups = event["requestParameters"].get("groupSet", None)
+        request_parameters = get_field_from_event_or_detail(event, "requestParameters")
+        interface_id = request_parameters.get("networkInterfaceId", None)
+        groups = request_parameters.get("groupSet", None)
+
         if interface_id and groups:
             check_if_network_interface_got_illegal_sg(interface_id, groups["items"])
         else:
@@ -77,8 +87,13 @@ def check_ingress_rule_changes(group_id, rules, instance_id=None):
     # Only remediate if security group is attached to  EC2 instance
     if instance_id is None:
         LOGGER.info("Instance id is not provided by the event")
-        # TODO: figure out if the group belong to at least one EC2 instance. If not abort the remidiation for this group
-        return
+        # TODO: for performance it would be best to do this only if group has an invalid rule
+        instance_ids = get_instances_group_is_used_on(group_id)
+        if len(instance_ids) == 0:
+            LOGGER.info(f"Group {group_id} is not connected to any instances")
+            return
+        else:
+            instance_id = ",".join(instance_ids)
 
     for rule in rules:
         LOGGER.info(rule)
@@ -101,6 +116,21 @@ def check_ingress_rule_changes(group_id, rules, instance_id=None):
             LOGGER.info(f"Rule {rule_id} allow illegal trafic for group: {group_id}")
 
             remove_rule_and_push_notification(group_id, rule_id, instance_id)
+
+
+def get_instances_group_is_used_on(group_id):
+
+    LOGGER.info(f"Finding usage of {group_id}")
+    # TODO: should loop until next token is None
+    interfaces = EC2_CLIENT.describe_network_interfaces(
+        Filters=[{"Name": "group-id", "Values": [group_id]}]
+    )
+    instance_ids = []
+    for interface in interfaces["NetworkInterfaces"]:
+        attachment = interface.get("Attachment", {})
+        if attachment.get("InstanceId", "").startswith("i-"):
+            instance_ids.append(attachment.get("InstanceId", ""))
+    return instance_ids
 
 
 def remove_rule_and_push_notification(group_id, rule_id, instance_id):

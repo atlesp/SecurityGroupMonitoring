@@ -99,7 +99,8 @@ resource "aws_iam_role_policy" "custom_policy" {
         Action = [
           "ec2:DescribeSecurityGroups",
           "ec2:DescribeSecurityGroupRules",
-          "ec2:RevokeSecurityGroupIngress"
+          "ec2:RevokeSecurityGroupIngress",
+          "ec2:DescribeNetworkInterfaces"
         ]
         Effect   = "Allow"
         Resource = "*"
