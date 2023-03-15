@@ -21,7 +21,7 @@ Selected to use CloudTrail instead of AWS Config to monitor for changes, even if
 I have not enabled AWS Config in my private playground AWS account and experience have learned me that it is cumbersome to disable again. While the cloudtrail events already are available.
 
 
-# Useful Terraform commands for an Terraform noob
+# Useful Terraform commands for a Terraform noob
 - `terraform init`
 - `terraform plan`
 - `terraform apply`
@@ -41,6 +41,8 @@ I have not enabled AWS Config in my private playground AWS account and experienc
 - Set permission boundary for the role
 - IPv6 check also
 - Replace all usage of magic strings
+- Clean up code
+
 
 # Possible other implementation options to get/manage the events
 - EventBridge
