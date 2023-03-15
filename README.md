@@ -34,7 +34,6 @@ I have not enabled AWS Config in my private playground AWS account and experienc
 - Adding outputs to the terraform to make debugging easier
 - Multiple regions support
 - Error handling, retry, etc
-- Better logging with help of a logger 
 - CI / CD
 - Automated Tests
 - Configuration to support different environments, etc
